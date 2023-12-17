@@ -1,68 +1,34 @@
+#pragma once
 #include <iostream>
 #include <fstream>
 #include "Node.h"
+#include "dict.h"
+#include "search.h"
+#include<chrono>
 
-#include<vector> // remove this
-#include<string>
 using namespace std;
-
-static vector<int>mergeVector(vector<int>&v1, vector<int>&v2){
-
-        vector<int>ans;
-        int i=0;
-        int j=0;
-        while(i<v1.size() && j<v2.size()){
-
-            if(v1[i]<v2[j]){
-                ans.push_back(v1[i]);
-                i++;
-            }
-
-            else if(v1[i]== v2[j]){
-                 ans.push_back(v1[i]);
-                i++;
-                j++;
-            }
-
-            else{
-                 ans.push_back(v2[j]);
-                j++;
-            }
-
-        }
-
-        while(i<v1.size()){
-            ans.push_back(v1[i]);
-            i++;
-        }
-    
-        while(j<v2.size()){
-            ans.push_back(v2[j]);
-            j++;
-        }
-        return ans;
-    };
 
 
 class Data{
 
     public:
-    
     int page_no, book_code, para_no;
     float score;
     bool ispresent;
-    vector<int> wordvector;
+    vector<int>wordvector;
 
-    Data(int bookcode, int page, int paragraph){
-        book_code = bookcode;
-        page_no = page;
-        para_no = paragraph;
-        ispresent = false;
+
+    Data(int bkcode, int pg, int para){
+        book_code = bkcode;
+        page_no = pg;
+        para_no = para;
         score =0;
+        ispresent = false;
     }
 
+    
     void pirntData(){
-        cout << "[" << book_code << "," << page_no <<"," <<para_no << ","<<score  << "]"<< endl;
+        cout << "[" << book_code << "," << page_no <<"," <<para_no << ","<<score << "]"<< endl;
     }
 
     vector<int> getWordvector(){
@@ -70,7 +36,9 @@ class Data{
     }
 
     ~Data(){};
+
 };
+
 
 class Element{
 
@@ -87,12 +55,52 @@ class Element{
     }
 
     ~Element(){
-        for(int i=0;i<vec.size();i++){
-            delete vec[i];
-        }
-        vec.clear();
-    };
+        //write the destructor here
+    }
 };
+
+
+
+static vector<int>mergeVector(vector<int>&v1, vector<int>&v2){
+
+    vector<int>ans;
+    int i=0;
+    int j=0;
+    while(i<v1.size() && j<v2.size()){
+
+        if(v1[i]<v2[j]){
+            ans.push_back(v1[i]);
+            i++;
+        }
+
+        else if(v1[i]== v2[j]){
+            ans.push_back(v1[i]);
+            i++;
+            j++;
+        }
+
+        else{
+            ans.push_back(v2[j]);
+            j++;
+            }
+
+        }
+
+        while(i<v1.size()){
+            ans.push_back(v1[i]);
+            i++;
+        }
+    
+        while(j<v2.size()){
+            ans.push_back(v2[j]);
+            j++;
+        }
+        return ans;
+}
+
+
+
+
 
 
 class HubNode{
@@ -103,128 +111,98 @@ class HubNode{
     vector<int>hubwordvector;
 
     HubNode(){
-        hubscore =0;
+        hubscore = 0;
     }
 
     void insertHubdata(Data*d){
         hubscore += d->score;
         datalist.push_back(d);
-        hubwordvector =mergeVector(hubwordvector,d->wordvector);
+        hubwordvector = mergeVector(hubwordvector,d->wordvector);
     }
-
-    
     ~HubNode(){
     }
+
+
 };
+
 
 class Algorithms{
 
     public:
 
-        static bool Seperate(char ch, string&seperators){
-        for(int i=0;i<seperators.size();i++){
-            if(ch==seperators[i]){
-                return true;
+    //generates word list // can we optimize these ? 
+    static vector<string>generateWordList(string sentence){
+
+    vector<string> result;
+    string a="";
+    for (int i=0; i<sentence.size(); i++){
+        if (sentence[i]=='.' ||  sentence[i]==',' ||sentence[i]=='-' ||sentence[i]==':' ||sentence[i]=='!' ||sentence[i]=='[' ||sentence[i]=='(' ||sentence[i]==')' ||sentence[i]==']'||sentence[i]==';'||sentence[i]=='@'||sentence[i]=='?' || sentence[i]==' '|| static_cast<int>(sentence[i])==39 || static_cast<int>(sentence[i])==34){
+            if (a!=""){
+               
+               result.push_back(a);
             }
+            a="";
         }
-        return false;
-
+        else if (static_cast<int> (sentence[i]) >=65 && static_cast<int> (sentence[i])<=90 ){
+            char c= sentence[i]+32;
+            a=a+c;
         }
-
-       static vector<string>generateWordList(string sentence){
-
-        sentence+=' ';
-        vector<string>WordList;
-        string word = "";
-        bool flag= false;
-
-        for(int i =0;i<sentence.size();i++){
-            char ch = sentence[i];
-            string seperators = ". , - : ! \' \" ( ) ?—[]“”‘’˙;@";
-            bool isPresent = Seperate(ch,seperators);
-            ch = tolower(ch);
-            if(isPresent == false){
-                word+=ch;
-                flag = true;
-            }
+        else{
+            a=a+sentence[i];
+        }
+    }
+    if (a!=""){
+        
+        result.push_back(a);
+    }
+    // Implement your function here  
+    return result;
     
-            else{
-                if(flag == true){
-                    WordList.push_back(word);
-                }
-                    word="";
-                    flag= false;
-            }
-        }
-    return WordList;
     }
 
-    static int getHashcode(string word){
-
-        int code =0;
-        for(int i=0;i<word.size();i++){
-            code+=word[i];
-        }
+    //hash function for words  // can we create  a 
+    //good hash function
+    
+    static int getHashcode(string word){        
+    int code = 1;
+    for(char i : word){
+        code = (int(i) * ((code * 31 + int(i))% 1000000)) % 1000000 ;
+    }
         return code;
 
     }
 
+  
+    //hash function for elements
     static int triplehash(int a, int b, int c, int&m){
-        return (a*4+ b*2+c)%m;
+        return (103*a+ b*107+c*109)%m;
+    }
+    
+    //|x-y|
+    static int differnce(int x, int y){
+        if(x>y){
+
+            return x-y;
+        }
+        return y-x;
     }
 
-
-
-    static long long int scoreofword(string mainword){
-       ifstream file;
-       long long int result =0;
-       file.open("unigram_freq.csv");
-       string line;
-       getline(file, line);
-       while (getline(file, line)){
-
-           string word ="";
-           
-           int i=0;
-           while(line[i]!=','){
-               word+=line[i];
-               i++;
-           }
-           i++;
-
-           if(word == mainword && int(line[i])>=48 && int(line[i])<=57){
-           while(i<line.size()){
-              long long int number = line[i]-'0';
-              result = result*10 + number;
-               i++;
-           }
-             file.close();
-             return result;
-           }
-       }
-       return 0;
-    }
-
-    // merge for datas
+    //merge for sorting paragraphs on the basis of their scores:
     static void merge(std::vector<Data*>& arr, int left, int mid, int right) {
         int n1 = mid - left + 1;
         int n2 = right - mid;
-
-        // Create temporary subarrays
         std::vector<Data*> leftSubarray;
         std::vector<Data*> rightSubarray;
-
         for (int i = 0; i < n1; i++) {
             leftSubarray.push_back(arr[left + i]);
         }
-
         for (int i = 0; i < n2; i++) {
             rightSubarray.push_back(arr[mid + 1 + i]);
         }
 
         int i = 0;
         int j = 0;
-        int k = left;
+        int k = left; 
 
         while (i < n1 && j < n2) {
             if (leftSubarray[i]->score >= rightSubarray[j]->score) {
@@ -242,7 +220,6 @@ class Algorithms{
             i++;
             k++;
         }
-
         while (j < n2) {
             arr[k] = rightSubarray[j];
             j++;
@@ -250,6 +227,7 @@ class Algorithms{
         }
     }
 
+    //mergesort for sorting paragraphs on the basis of their scores:
     static void mergeSort(std::vector<Data*>& arr, int left, int right){
         if (left < right) {
             int mid = left + (right - left) / 2;
@@ -259,7 +237,8 @@ class Algorithms{
         }
     }
 
-    //merge sort for hubs :
+
+    //mergesort forhubNode:
     static void mergeHUB(vector<HubNode*>& arr, int left, int mid, int right) {
         int n1 = mid - left + 1;
         int n2 = right - mid;
@@ -278,7 +257,7 @@ class Algorithms{
 
         int i = 0;
         int j = 0;
-        int k = left;
+        int k = left; 
 
         while (i < n1 && j < n2) {
             if (leftSubarray[i]->hubscore >= rightSubarray[j]->hubscore) {
@@ -349,7 +328,7 @@ class Algorithms{
 
         int i = 0;
         int j = 0;
-        int k = left;
+        int k = left; 
 
         while (i < n1 && j < n2) {
             if (!compare(leftSubarray[i],rightSubarray[j])) {
@@ -384,42 +363,116 @@ class Algorithms{
         }
     }
 
-
-    static bool isPresent(string word, vector<string>junkwords){
-        for(int i=0;i<junkwords.size();i++){
-            if(word == junkwords[i]){
+    static bool isPresent(string& word, vector<string>&stop_words){
+        for(int i=0;i<stop_words.size();i++){
+            if(word == stop_words[i]){
                 return true;
             }
         }
         return false;
     }
 
+    static vector<string> modifyQuery(string question){
 
-    static vector<string> modifyQuery(string question ){
 
-        vector<string>junkword = {"the","of","and","to","a", "in","for","is","on","that","by","this","with","i","you","it","not","or","be","are","from","at","as","your","all","have","an","was","will","us"};
+        // "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom","this", "that", "these", "those", "am", "is", "are", "was", "were", "be", 
+        // "been", "being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", 
+        // "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further","describe", "then", "once", "here", "there", "when", "beyond","later","respond""react","where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "should", "should've", "now", "d", "ll", "m", "o", "re", "ve", "y", "ain", "were","like","experiences","influence","major","events","time","concept","name","some","contribute","contributes","main","objective","objectives","impact","views","key","choice","choices","trajectory","circumstances","surrounding", "surroundings","understanding","remembered","ma", "explain","show","tell","specific", "generally", "particular", "basically", "essentially", "ultimately", "primarily", "fundamentally", "significantly", "importantly", "notably","consequently", "therefore", "moreover", "nonetheless", "nevertheless", "furthermore", "meanwhile", "subsequently", "initially", "previously", "currently", "traditionally", "consistently", "occasionally", "frequently", "specifically", "generally", "relatively", "completely", "significance","entirely", "thoroughly", "inherently", "inherently", "notably", "significantly", "considerably", "primarily", "predominantly", "substantially", "exceptionally", "occasionally",  "frequently", "ultimately", "inherently", "noticeably", "notably", "significantly", "substantially", "particularly", "fundamentally", "essentially", "basically","mostly", "necessarily", "never", "normally", "obviously", "often", "overall", "partly", "possibly", "practically", "presumably", "previously", "primarily", "probably", "promptly", "properly", "quickly", "quietly", "rarely", "readily", "really", "recently", "regularly", "relatively", "right", "roughly", "seldom", "seriously", "significantly", "similarly", "simply", "slightly", "slowly", "so", "sometimes", "somewhat","effect","effects","side", "soon", "specifically", "strongly", "surely", "surprisingly", "temporarily", "thereby", "thus", "together", "totally", "truly", "typically", "ultimately", "usually", "virtually", "well", "widely",  "nevertheless", "therefore", "nonetheless", "significantly", "consequently", "primarily", "predominantly","substantially", "exceptionally", "occasionally", "fundamentally", "essentially", "mostly", "considerably","inherently", "noticeably", "partly", "obviously", 
+        // "temporarily", "regularly", "virtually","consequences","consequence","largely","chiefly","mainly","extensively", "profoundly","exceedingly","sporadically","intermittently","periodically","steadily","steadfastly","persistently","steadily","perpetually","infrequently","infrequently","constantly","continuously", "habitually","routinely","conclusively","unequivocally","decisively","explicitly","implicitly","concretely","tangibly","unquestionably","undeniably","incontestably","indubitably","certainly","assuredly","definitely","definitively","unmistakably","unambiguously","unequivocally","emphatically","vividly","lucidly","palpably","tangibly","plainly","clearly","simply","obviously","apparently","evidently","patently","apparently","allegedly","reportedly","purportedly","supposedly","ostensibly","presumably","hypothetically","speculatively","theoretically","hypothetically","hypothetically","presumptively", "theoretically","suppositionally","conjecturally","purportedly","arguably","debatably","dubiously","doubtfully","questionably","controversially","disputably","disputedly","doubtfully"};
+
+        vector<string> stop_words;
+        stop_words.push_back("i");
+stop_words.push_back("me");
+stop_words.push_back("my");
+stop_words.push_back("myself");
+stop_words.push_back("we");
+stop_words.push_back("our");
+stop_words.push_back("ours");
+stop_words.push_back("ourselves");
+stop_words.push_back("you");
+stop_words.push_back("your");
+stop_words.push_back("yours");
+stop_words.push_back("yourself");
+stop_words.push_back("yourselves");
+stop_words.push_back("he");
+stop_words.push_back("him");
+stop_words.push_back("his");
+stop_words.push_back("himself");
+stop_words.push_back("she");
+stop_words.push_back("her");
+stop_words.push_back("hers");
+stop_words.push_back("herself");
+stop_words.push_back("it");
+stop_words.push_back("its");
+stop_words.push_back("itself");
+stop_words.push_back("they");
+stop_words.push_back("them");
+stop_words.push_back("their");
+stop_words.push_back("theirs");
+stop_words.push_back("themselves");
+stop_words.push_back("what");
+stop_words.push_back("which");
+stop_words.push_back("who");
+stop_words.push_back("whom");
+stop_words.push_back("this");
+stop_words.push_back("that");
+stop_words.push_back("these");
+stop_words.push_back("those");
+stop_words.push_back("am");
+stop_words.push_back("is");
+stop_words.push_back("are");
+stop_words.push_back("was");
+stop_words.push_back("were");
+stop_words.push_back("be");
+stop_words.push_back("been");
+stop_words.push_back("being");
+stop_words.push_back("have");
+stop_words.push_back("has");
+stop_words.push_back("had");
+stop_words.push_back("having");
+stop_words.push_back("do");
+stop_words.push_back("does");
+stop_words.push_back("did");
+stop_words.push_back("doing");
+stop_words.push_back("a");
+stop_words.push_back("an");
+stop_words.push_back("the");
+stop_words.push_back("and");
+stop_words.push_back("but");
+stop_words.push_back("if");
+stop_words.push_back("or");
+stop_words.push_back("because");
+stop_words.push_back("as");
+stop_words.push_back("until");
+stop_words.push_back("while");
+stop_words.push_back("of");
+stop_words.push_back("at");
+stop_words.push_back("by");
+stop_words.push_back("for");
+stop_words.push_back("with");
+stop_words.push_back("about");
+stop_words.push_back("against");
+stop_words.push_back("between");
+stop_words.push_back("into");
+stop_words.push_back("through");
+stop_words.push_back("during");
+stop_words.push_back("views");
+stop_words.push_back("effect");
+
+
 
         vector<string>emp;
         vector<string> wordlist = generateWordList(question);
         for(int i=0;i<wordlist.size();i++){
-            if(!isPresent(wordlist[i],junkword)){
+            if(!isPresent(wordlist[i],stop_words)){
                 emp.push_back(wordlist[i]);
             }
         }
-    return emp;
-    }
-
-    
-
-    static int differnce(int x, int y){
-        if(x>y){
-            return x-y;
-        }
-        return y-x;
+        return emp;
     }
 
 
-    static vector<HubNode*> hubMaker(vector<Data*>datavector){
+static vector<HubNode*> hubMaker(vector<Data*>datavector){
 
         vector<HubNode*>hubresults;
         HubNode* hub1 = new HubNode();
@@ -446,41 +499,40 @@ class Algorithms{
     }
 
 
-    static void updateHub(vector<HubNode*>&hubvector, int&n){
+static void updateHub(vector<HubNode*>&hubvector, int&n){
+    float factor = 10;
+    for(int i=0;i<hubvector.size();i++){
 
-        for(int i=0;i<hubvector.size();i++){
-
-            if(hubvector[i]->hubwordvector.size() == n){
-                hubvector[i]->hubscore *= 2;
-            }
-
+        if(hubvector[i]->hubwordvector.size() == n){
+         
+            hubvector[i]->hubscore *= factor;
         }
+
     }
+}
+
 };
-
-
-
-
-
-
-
 
 
 class Chaining{
 
     private:
-    int max_size;
+    int  max_size;
 
     public:
-    vector<Element*>*word_storage;
-    vector<Data*>*data_storage;
+    vector<Element*>*word_storage; //main array for hashing for words 
+    vector<Data*>*data_storage; // main array for hashing for datas 
 
+
+    //constructor
     Chaining(){
         max_size = 1000000;
         word_storage = new vector<Element*>[max_size];
-        data_storage = new vector<Data*>[max_size];
+        data_storage = new vector<Data*>[max_size];   
     }
 
+
+    //insert a given Data node in the hash table  //returns the pointer inserted data
     Data* insertData(int book_code, int page_no, int para_no){
         int hashcode = Algorithms::triplehash(book_code,page_no,para_no,max_size);
         Data* newData = new Data(book_code,page_no,para_no);
@@ -488,22 +540,28 @@ class Chaining{
         return newData;
     }
 
-    Data* searchData(int book_code, int page_no, int para_no){
+    
+    //search a particular data present in the hash table , if not present the returns nullptr
+    Data* searchData(int book_code, int page_no, int para_no){       
         int hashcode = Algorithms::triplehash(book_code,page_no,para_no,max_size);
-        vector<Data*> subvector = data_storage[hashcode];
-        for(int i=0;i<subvector.size();i++){
+        vector<Data*> subvector = data_storage[hashcode]; //chaining list for given hash code
+        for(int i=0;i<subvector.size();i++){ 
             if(subvector[i]->book_code == book_code && subvector[i]->page_no == page_no && subvector[i]->para_no == para_no){
                 return subvector[i];
             }
         }
-        return NULL;
+        return nullptr;
     }
 
+
+    //insert element node in the word_storage hash table: 
     void insertElement(string word, int book_code, int page_no, int para_no){
-       int hashcode = Algorithms :: getHashcode(word);
+       int hashcode = Algorithms :: getHashcode(word); 
        for(int i=0;i<word_storage[hashcode].size();i++){
+
+        //vector stored at respective hash index
         if(word_storage[hashcode][i]->word == word){
-            if (searchData(book_code,page_no,para_no)==NULL){
+            if (searchData(book_code,page_no,para_no)==nullptr){
                 word_storage[hashcode][i]->vec.push_back(insertData(book_code,page_no,para_no));
             }
             else{
@@ -512,8 +570,8 @@ class Chaining{
             return;
         }
        }
-        Element *e = new Element(word);
-        if (searchData(book_code,page_no,para_no)==NULL){
+        Element *e = new Element(word); //new word which is not present in data_storage:
+        if (searchData(book_code,page_no,para_no)==nullptr){
             e->vec.push_back(insertData(book_code,page_no,para_no));
         }
         else{
@@ -521,18 +579,41 @@ class Chaining{
         }
         word_storage[hashcode].push_back(e);
     }
-    
+
+
+    //returns the vector of the word from word_storage
     vector<Data*> searchElements(string word){
+
         vector<Data*>emp;
         int hashcode = Algorithms :: getHashcode(word);
         vector<Element*>subvector = word_storage[hashcode];
+        
         for(int i=0;i<subvector.size();i++){
+            
             if(subvector[i]->word == word){
+      
                return subvector[i]->vec;
             }
         }
         return emp;
     }
+
+    
+    ~Chaining(){
+
+
+        //delete data_storage pointers , elements,hubNode will also get deleted:
+        for(int i=0;i<1000000;i++){
+            for(int j=0;j<data_storage[i].size();j++){
+                delete data_storage[i][j];
+            }
+        }   
+
+        //deleting the dynamic array:
+        delete []word_storage;
+        delete []data_storage;
+    }
+
 };
 
 
@@ -540,11 +621,21 @@ class Chaining{
 class QNA_tool {
 
 private:
+
     // You are free to change the implementation of this function
-    void query_llm(string filename, Node* root, int k, string API_KEY);
+    void query_llm(string filename, Node* root, int k, string API_KEY, string question);
+    // filename is the python file which will call ChatGPT API
+    // root is the head of the linked list of paragraphs
+    // k is the number of paragraphs (or the number of nodes in linked list)
+    // API_KEY is the API key for ChatGPT
+    // question is the question asked by the user
     // You can add attributes/helper functions here
+
 public:
-    Chaining*document;
+
+    Chaining* document;
+    Dict* csvfile;
+
     /* Please do not touch the attributes and
     functions within the guard lines placed below  */
     /* ------------------------------------------- */
@@ -553,7 +644,7 @@ public:
     ~QNA_tool(); // Destructor
 
     void insert_sentence(int book_code, int page, int paragraph, int sentence_no, string sentence);
-    // This function is similar to the functions in dict and search
+    // This function is similar to the functions in dict and search 
     // The corpus will be provided to you via this function
     // It will be called for each sentence in the corpus
 
@@ -561,6 +652,10 @@ public:
     // This function takes in a question, preprocess it
     // And returns a list of paragraphs which contain the question
     // In each Node, you must set: book_code, page, paragraph (other parameters won't be checked)
+
+    std::string get_paragraph(int book_code, int page, int paragraph);
+    // Given the book_code, page number, and the paragraph number, returns the string paragraph.
+    // Searches through the corpus.
 
     void query(string question, string filename);
     // This function takes in a question and a filename.
@@ -571,5 +666,3 @@ public:
 
     // You can add attributes/helper functions here
 };
-
-

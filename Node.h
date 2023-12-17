@@ -3,7 +3,7 @@
 using namespace std;
 
 class Node {
-public:
+public: 
     Node* left;
     Node* right;
 
